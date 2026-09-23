@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>실행A.log — P제어 플롯 (Kp=3, -90deg)</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#f3f4f6;margin:0;padding:20px;color:#111}
+  .card{background:#fff;border:1px solid #ddd;border-radius:12px;max-width:1100px;margin:0 auto;padding:20px;box-shadow:0 4px 6px rgba(0,0,0,.08)}
+  h2{margin:0 0 4px;font-size:18px}
+  .sub{color:#666;font-size:13px;margin:0 0 12px}
+  .meta{font-size:12px;color:#444;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-family:monospace;white-space:pre-wrap}
+  .panel{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-bottom:12px}
+  .panel .row{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+  .chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer;user-select:none;border:1px solid #e5e7eb;background:#fff;border-radius:6px;padding:3px 8px}
+  .chk input{width:15px;height:15px;cursor:pointer}
+  .dot{font-size:14px}
+  .btn{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
+  .btn:hover{background:#eef2ff}
+  .btn.active{background:#1f2937;color:#fff;border-color:#1f2937}
+  #wrap{position:relative}
+  canvas{width:100%;height:480px;display:block;background:#fff;border:1px solid #ccc;border-radius:8px;cursor:crosshair}
+  #tip{position:fixed;background:rgba(0,0,0,.88);color:#fff;padding:8px 10px;border-radius:6px;font-size:11px;font-family:monospace;line-height:1.5;pointer-events:none;opacity:0;z-index:999;max-width:320px}
+  .foot{font-size:12px;color:#666;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>🤖 실행A.log — P제어 응답 플롯</h2>
+  <p class="sub">s 1.5 120 -90 &nbsp;|&nbsp; Kp=3.0, speed_limit=120 deg/s, target −90° &nbsp;|&nbsp; 체크박스로 요소 on/off, 마우스 호버로 값 확인, 구간 버튼으로 확대</p>
+  <div class="meta" id="meta"></div>
+  <div class="panel">
+    <div class="row" id="checks"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="allOn">전체 켜기</button>
+      <button class="btn" id="allOff">전체 끄기</button>
+      <span style="width:12px"></span>
+      <span style="font-size:12px;color:#666">X구간:</span>
+      <button class="btn xrange active" data-r="full">전체 0–40s</button>
+      <button class="btn xrange" data-r="dyn">동적 0–8s</button>
+      <button class="btn xrange" data-r="step">스텝 1.5–6.5s</button>
+      <button class="btn xrange" data-r="steady">정상 5–40s</button>
+      <label style="font-size:12px;color:#666;margin-left:8px"><input type="checkbox" id="autoscale" checked> Y 자동스케일(표시중 기준)</label>
+    </div>
+  </div>
+  <div id="wrap"><canvas id="cv"></canvas></div>
+  <div class="foot">X축: t_s [s] &nbsp;|&nbsp; Y축: deg / deg/s &nbsp;|&nbsp; v_limit·dt는 값이 평탄하므로 기본 OFF. i/d는 0으로 겹치므로 기본 OFF.</div>
+</div>
+<div id="tip"></div>
+<script>
+const DATA = [[0.1,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[0.2,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[0.3,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.001],[0.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[0.5,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[0.6,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.001],[0.7,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[0.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.001],[0.9,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.1,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.2,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.3,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.001],[1.6,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.7,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[1.8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.001],[1.9,0.0,0.088,-0.088,0.0,0.0,0.0,0.0,0.0,0.0,120.0,10.0],[2.0,-90.0,0.088,-90.088,-135.132,0.0,0.0,-135.132,0.0,-119.538,120.0,10.0],[2.1,-90.0,-0.176,-89.824,-134.736,0.0,0.0,-134.736,-1.374,-119.538,120.0,10.0],[2.2,-90.0,-1.406,-88.594,-132.891,0.0,0.0,-132.891,-10.992,-119.538,120.0,10.0],[2.3,-90.0,-3.516,-86.484,-129.727,0.0,0.0,-129.727,-20.61,-119.538,120.0,10.0],[2.4,-90.0,-6.68,-83.32,-124.98,0.0,0.0,-124.98,-30.228,-119.538,120.0,10.0],[2.5,-90.0,-10.811,-79.189,-118.784,0.0,0.0,-118.784,-41.22,-118.164,120.0,10.0],[2.6,-90.0,-15.996,-74.004,-111.006,0.0,0.0,-111.006,-50.838,-111.294,120.0,10.0],[2.7,-90.0,-22.412,-67.588,-101.382,0.0,0.0,-101.382,-61.83,-101.676,120.0,10.0],[2.8,-90.0,-29.795,-60.205,-90.308,0.0,0.0,-90.308,-71.448,-90.684,120.0,10.0],[2.9,-90.0,-38.145,-51.855,-77.783,0.0,0.0,-77.783,-82.44,-78.318,120.0,10.0],[3.0,-90.0,-46.318,-43.682,-65.522,0.0,0.0,-65.522,-79.692,-65.952,120.0,10.001],[3.1,-90.0,-53.438,-36.563,-54.844,0.0,0.0,-54.844,-70.074,-54.96,120.0,10.0],[3.2,-90.0,-59.502,-30.498,-45.747,0.0,0.0,-45.747,-60.456,-45.342,120.0,10.0],[3.3,-90.0,-64.6,-25.4,-38.101,0.0,0.0,-38.101,-48.09,-38.472,120.0,10.0],[3.4,-90.0,-68.73,-21.27,-31.904,0.0,0.0,-31.904,-38.472,-31.602,120.0,10.001],[3.5,-90.0,-71.895,-18.105,-27.158,0.0,0.0,-27.158,-31.602,-27.48,120.0,10.0],[3.6,-90.0,-74.707,-15.293,-22.939,0.0,0.0,-22.939,-27.48,-23.358,120.0,10.0],[3.7,-90.0,-76.992,-13.008,-19.512,0.0,0.0,-19.512,-23.358,-19.236,120.0,10.0],[3.8,-90.0,-79.014,-10.986,-16.479,0.0,0.0,-16.479,-19.236,-16.488,120.0,10.0],[3.9,-90.0,-80.859,-9.141,-13.711,0.0,0.0,-13.711,-16.488,-13.74,120.0,10.001],[4.0,-90.0,-82.266,-7.734,-11.602,0.0,0.0,-11.602,-13.74,-10.992,120.0,10.0],[4.1,-90.0,-83.496,-6.504,-9.756,0.0,0.0,-9.756,-10.992,-9.618,120.0,10.001],[4.2,-90.0,-84.463,-5.537,-8.306,0.0,0.0,-8.306,-9.618,-8.244,120.0,10.0],[4.3,-90.0,-85.342,-4.658,-6.987,0.0,0.0,-6.987,-8.244,-6.87,120.0,10.0],[4.4,-90.0,-86.045,-3.955,-5.933,0.0,0.0,-5.933,-6.87,-5.496,120.0,10.0],[4.5,-90.0,-86.572,-3.428,-5.142,0.0,0.0,-5.142,-5.496,-5.496,120.0,10.0],[4.6,-90.0,-87.188,-2.813,-4.219,0.0,0.0,-4.219,-4.122,-4.122,120.0,10.0],[4.7,-90.0,-87.627,-2.373,-3.56,0.0,0.0,-3.56,-4.122,-4.122,120.0,10.001],[4.8,-90.0,-87.891,-2.109,-3.164,0.0,0.0,-3.164,-1.374,-2.748,120.0,10.001],[4.9,-90.0,-88.242,-1.758,-2.637,0.0,0.0,-2.637,-2.748,-2.748,120.0,10.001],[5.0,-90.0,-88.594,-1.406,-2.109,0.0,0.0,-2.109,-2.748,-2.748,120.0,10.0],[5.1,-90.0,-88.682,-1.318,-1.978,0.0,0.0,-1.978,0.0,-1.374,120.0,10.0],[5.2,-90.0,-88.857,-1.143,-1.714,0.0,0.0,-1.714,-1.374,-1.374,120.0,10.001],[5.3,-90.0,-88.945,-1.055,-1.582,0.0,0.0,-1.582,0.0,-1.374,120.0,10.001],[5.4,-90.0,-89.209,-0.791,-1.187,0.0,0.0,-1.187,-2.748,-1.374,120.0,10.001],[5.5,-90.0,-89.209,-0.791,-1.187,0.0,0.0,-1.187,0.0,-1.374,120.0,10.0],[5.6,-90.0,-89.385,-0.615,-0.923,0.0,0.0,-0.923,-1.374,-1.374,120.0,10.002],[5.7,-90.0,-89.473,-0.527,-0.791,0.0,0.0,-0.791,0.0,-1.374,120.0,10.002],[5.8,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,-1.374,0.0,120.0,10.002],[5.9,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[6.0,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[6.1,-90.0,-89.561,-0.439,-0.659,0.0,0.0,-0.659,0.0,0.0,120.0,10.0],[6.2,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[6.3,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[6.4,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[6.5,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[6.6,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[6.7,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[6.8,-90.0,-89.561,-0.439,-0.659,0.0,0.0,-0.659,0.0,0.0,120.0,10.002],[6.9,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[7.0,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[7.1,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[7.2,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[7.3,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[7.4,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.003],[7.5,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[7.6,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[7.7,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[7.8,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[7.9,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[8.0,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[8.1,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[8.2,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[8.3,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[8.4,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[8.5,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[8.6,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[8.7,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[8.8,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[8.9,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.003],[9.0,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[9.1,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[9.2,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[9.301,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[9.401,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[9.501,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[9.601,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[9.701,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[9.801,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[9.901,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[10.001,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[10.101,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[10.201,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[10.301,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[10.401,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.003],[10.501,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[10.601,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[10.701,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[10.801,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[10.901,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[11.001,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[11.101,-90.0,-89.561,-0.439,-0.659,0.0,0.0,-0.659,0.0,0.0,120.0,10.003],[11.201,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[11.301,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[11.401,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.0],[11.501,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[11.601,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.002],[11.701,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.001],[11.801,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.003],[11.901,-90.0,-89.648,-0.352,-0.527,0.0,0.0,-0.527,0.0,0.0,120.0,10.003]]; // [t,target,pos,err,p,i,d,pid,spd,u,vlim,dt]
+const SERIES = [
+  {key:1,label:'target_deg', color:'#ef4444', on:true,  unit:'deg'},
+  {key:2,label:'position_deg',color:'#2563eb', on:true,  unit:'deg'},
+  {key:3,label:'error_deg',   color:'#d97706', on:true,  unit:'deg'},
+  {key:4,label:'p_deg_s',     color:'#059669', on:true,  unit:'deg/s'},
+  {key:7,label:'pid_deg_s',   color:'#7c3aed', on:false, unit:'deg/s'},
+  {key:8,label:'speed_deg_s', color:'#0891b2', on:true,  unit:'deg/s'},
+  {key:9,label:'u_deg_s',     color:'#db2777', on:true,  unit:'deg/s'},
+  {key:5,label:'i_deg_s',     color:'#65a30d', on:false, unit:'deg/s'},
+  {key:6,label:'d_deg_s',     color:'#a16207', on:false, unit:'deg/s'},
+  {key:10,label:'v_limit_deg_s',color:'#6b7280',on:false,unit:'deg/s'},
+  {key:11,label:'dt_ms',      color:'#9ca3af', on:false, unit:'ms'},
+];
+let xRange = null; // [xmin,xmax] or null=full
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const tip = document.getElementById('tip');
+const pad = {l:64,r:16,t:16,b:34};
+function curX(){ if(xRange) return xRange; return [DATA[0][0], DATA[DATA.length-1][0]]; }
+function visibleSeries(){ return SERIES.filter(s=>s.on); }
+function yRange(){
+  const auto = document.getElementById('autoscale').checked;
+  const vs = visibleSeries();
+  if(!vs.length) return [-10,10];
+  const [xa,xb] = curX();
+  let mn=Infinity, mx=-Infinity;
+  for(const row of DATA){
+    if(row[0]<xa-1e-9||row[0]>xb+1e-9) continue;
+    for(const s of vs){ const v=row[s.key]; if(v<mn)mn=v; if(v>mx)mx=v; }
+  }
+  if(!isFinite(mn)){ mn=-10; mx=10; }
+  if(!auto) return [-280,130];
+  if(mx-mn<1e-6){ mn-=1; mx+=1; }
+  const padY=(mx-mn)*0.08; return [mn-padY, mx+padY];
+}
+function sizeCanvas(){
+  const r = cv.getBoundingClientRect();
+  const dpr = window.devicePixelRatio||1;
+  cv.width = Math.max(300, r.width*dpr);
+  cv.height = 480*dpr;
+}
+function niceTicks(mn,mx,n){
+  n=n||6; if(mx<=mn){mx=mn+1;}
+  const span=mx-mn, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+  const norm=step0/mag; let step;
+  if(norm<1.5)step=1; else if(norm<3.5)step=2; else if(norm<7.5)step=5; else step=10;
+  step*=mag;
+  const t0=Math.ceil(mn/step)*step; const arr=[];
+  for(let v=t0; v<=mx+1e-9; v+=step) arr.push(+v.toFixed(6));
+  return {ticks:arr, step};
+}
+function draw(){
+  sizeCanvas();
+  const dpr = window.devicePixelRatio||1;
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const [xa,xb]=curX(); const [ya,yb]=yRange();
+  const X=v=>pad.l*dpr+(v-xa)/(xb-xa)*(W-pad.l*dpr-pad.r*dpr);
+  const Y=v=>pad.t*dpr+(yb-v)/(yb-ya)*(H-pad.t*dpr-pad.b*dpr);
+  // grid + y ticks
+  const {ticks}=niceTicks(ya,yb,8);
+  ctx.font = `${11*dpr}px monospace`; ctx.lineWidth=1;
+  ticks.forEach(t=>{
+    const y=Y(t);
+    ctx.strokeStyle='#e5e7eb'; ctx.setLineDash([4*dpr,4*dpr]);
+    ctx.beginPath(); ctx.moveTo(pad.l*dpr,y); ctx.lineTo(W-pad.r*dpr,y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#4b5563'; ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(String(t), pad.l*dpr-6*dpr, y);
+  });
+  // x ticks
+  const xt=niceTicks(xa,xb,10);
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  xt.ticks.forEach(t=>{
+    const x=X(t);
+    ctx.strokeStyle='#e5e7eb'; ctx.setLineDash([4*dpr,4*dpr]);
+    ctx.beginPath(); ctx.moveTo(x,pad.t*dpr); ctx.lineTo(x,H-pad.b*dpr); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#4b5563';
+    ctx.fillText(t.toFixed(1)+'s', x, H-pad.b*dpr+6*dpr);
+  });
+  // zero line
+  if(ya<0&&yb>0){
+    const y0=Y(0);
+    ctx.strokeStyle='#9ca3af'; ctx.lineWidth=1.5*dpr;
+    ctx.beginPath(); ctx.moveTo(pad.l*dpr,y0); ctx.lineTo(W-pad.r*dpr,y0); ctx.stroke();
+  }
+  // step marker t=2.0
+  if(xa<=2.0&&2.0<=xb){
+    const xs=X(2.0);
+    ctx.strokeStyle='#f59e0b'; ctx.setLineDash([6*dpr,4*dpr]); ctx.lineWidth=1.2*dpr;
+    ctx.beginPath(); ctx.moveTo(xs,pad.t*dpr); ctx.lineTo(xs,H-pad.b*dpr); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#92400e'; ctx.textAlign='left';
+    ctx.fillText('step t=2.0s', xs+4*dpr, pad.t*dpr+2*dpr);
+  }
+  // axes
+  ctx.strokeStyle='#4b5563'; ctx.lineWidth=2*dpr;
+  ctx.beginPath(); ctx.moveTo(pad.l*dpr,pad.t*dpr); ctx.lineTo(pad.l*dpr,H-pad.b*dpr); ctx.lineTo(W-pad.r*dpr,H-pad.b*dpr); ctx.stroke();
+  // lines
+  ctx.lineWidth=2*dpr; ctx.lineJoin='round'; ctx.lineCap='round';
+  for(const s of visibleSeries()){
+    ctx.strokeStyle=s.color;
+    ctx.beginPath();
+    let started=false;
+    for(const row of DATA){
+      const t=row[0]; if(t<xa-1e-9||t>xb+1e-9) continue;
+      const x=X(t), y=Y(row[s.key]);
+      if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  // store transform for hover
+  cv._X=X; cv._Y=Y; cv._xa=xa; cv._xb=xb; cv._ya=ya; cv._yb=yb;
+}
+function nearest(t){
+  let lo=0, hi=DATA.length-1;
+  while(hi-lo>1){ const m=(lo+hi)>>1; if(DATA[m][0]<t) lo=m; else hi=m; }
+  return Math.abs(DATA[lo][0]-t)<=Math.abs(DATA[hi][0]-t)?lo:hi;
+}
+cv.addEventListener('mousemove', e=>{
+  const r=cv.getBoundingClientRect();
+  const px=(e.clientX-r.left)/r.width*cv.width;
+  const xa=cv._xa, xb=cv._xb;
+  const padL=pad.l*(window.devicePixelRatio||1), padR=pad.r*(window.devicePixelRatio||1);
+  const t=xa+(px-padL)/(cv.width-padL-padR)*(xb-xa);
+  const tc=Math.min(Math.max(t,xa),xb);
+  const i=nearest(tc), row=DATA[i];
+  let h='<b>t = '+row[0].toFixed(3)+' s</b><br><hr style="border-color:#555;margin:4px 0">';
+  for(const s of SERIES){
+    if(!s.on) continue;
+    h+='<span style="color:'+s.color+'">●</span> '+s.label+': <b>'+row[s.key].toFixed(3)+'</b> '+s.unit+'<br>';
+  }
+  tip.innerHTML=h; tip.style.opacity='1';
+  tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
+});
+cv.addEventListener('mouseleave', ()=>{ tip.style.opacity='0'; });
+// checkboxes
+const box=document.getElementById('checks');
+SERIES.forEach(s=>{
+  const lab=document.createElement('label'); lab.className='chk';
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=s.on;
+  cb.addEventListener('change', ()=>{ s.on=cb.checked; draw(); });
+  const d=document.createElement('span'); d.className='dot'; d.style.color=s.color; d.textContent='●';
+  const tx=document.createElement('span'); tx.textContent=s.label;
+  lab.appendChild(cb); lab.appendChild(d); lab.appendChild(tx);
+  box.appendChild(lab);
+  s._cb=cb;
+});
+document.getElementById('allOn').onclick=()=>{ SERIES.forEach(s=>{s.on=true;s._cb.checked=true;}); draw(); };
+document.getElementById('allOff').onclick=()=>{ SERIES.forEach(s=>{s.on=false;s._cb.checked=false;}); draw(); };
+document.querySelectorAll('.xrange').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.xrange').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const v=b.dataset.r;
+    if(v==='full') xRange=null;
+    else if(v==='dyn') xRange=[0,8];
+    else if(v==='step') xRange=[1.5,6.5];
+    else if(v==='steady') xRange=[5,40.3];
+    draw();
+  };
+});
+document.getElementById('autoscale').addEventListener('change', draw);
+window.addEventListener('resize', draw);
+// meta
+(function(){
+  const posMin=Math.min(...DATA.map(r=>r[2]));
+  const pMin=Math.min(...DATA.map(r=>r[4]));
+  const spdMin=Math.min(...DATA.map(r=>r[8]));
+  const m='rows='+DATA.length+'   t='+DATA[0][0].toFixed(1)+'..'+DATA[DATA.length-1][0].toFixed(3)+'s'
+   +'   target 0→-90° @t=2.0s   pos_min='+posMin.toFixed(3)+'° (overshoot '+(-90-posMin>0?(-90-posMin).toFixed(3):'0')+'° beyond -90)'
+   +'   p_min='+pMin.toFixed(1)+'  speed_min='+spdMin.toFixed(1)+' deg/s';
+  document.getElementById('meta').textContent=m;
+})();
+draw();
+</script>
+</body>
+</html>
