@@ -45,8 +45,6 @@ s 3 120 -90 # s P 3 속도 120 목표 -90
 | 부하 | 예상 부하는 동일 할 것으로 예상 | 동일 | ○ |
 | 제어/측정 주기 | 제어/측정주기 0.1s | 제어/측정주기 0.1s | ○ |
 | 플롯 | [실행A plot](./results/실행A.html) | [실행B plot](./results/실행B.html) | - |
-<iframe src="results/실행A.html" width="100%" height="600px"></iframe>
-<iframe src="results/실행B.html" width="100%" height="600px"></iframe>
 
 ### 3-2. 같은 경과시간 비교 (현재각·목표 초과 여부)
 초과 = 현재각이 목표 −90°를 음(−)방향으로 통과한 상태. 차이 = A − B (현재각 기준).
