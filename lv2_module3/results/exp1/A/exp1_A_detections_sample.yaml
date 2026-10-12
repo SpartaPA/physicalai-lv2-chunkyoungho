@@ -1,0 +1,51 @@
+header:
+  stamp:
+    sec: 1791784735
+    nanosec: 82055908
+  frame_id: camera_color_optical_frame
+detections:
+- header:
+    stamp:
+      sec: 1791784735
+      nanosec: 82055908
+    frame_id: camera_color_optical_frame
+  results: []
+  bbox:
+    center:
+      position:
+        x: 338.5
+        y: 312.5
+      theta: 0.0
+    size_x: 26.0
+    size_y: 56.0
+  id: '0'
+- header:
+    stamp:
+      sec: 1791784735
+      nanosec: 82055908
+    frame_id: camera_color_optical_frame
+  results: []
+  bbox:
+    center:
+      position:
+        x: 358.5
+        y: 239.0
+      theta: 0.0
+    size_x: 50.0
+    size_y: 63.0
+  id: '1'
+- header:
+    stamp:
+      sec: 1791784735
+      nanosec: 82055908
+    frame_id: camera_color_optical_frame
+  results: []
+  bbox:
+    center:
+      position:
+        x: 484.5
+        y: 128.5
+      theta: 0.0
+    size_x: 278.0
+    size_y: 150.0
+  id: '2'
