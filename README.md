@@ -1,14 +1,33 @@
 # physicalai-lv2-chunkyoungho
 PA1기 천경호 lv2 과제 제출용 레포입니다
 
-- [lv2 module1](./lv2_module1/README.md "lv2 module 1")
-- [lv2 module2](./lv2_module2/README.md "lv2 module 2")
-- [lv2 module3](./lv2_module3/README.md "lv2 module 3")
-- [lv2 module4](./lv2_module4/README.md "lv2 module 4")
-- [lv2 module5](./lv2_module5/README.md "lv2 module 5")
-- [lv2 module6](./lv2_module6/README.md "lv2 module 6")
-- [lv2 module7](./lv2_module7/README.md "lv2 module 7")
-- [lv2 module8](./lv2_module8/README.md "lv2 module 8")
-- [lv2 module9](./lv2_module9/README.md "lv2 module 9")
-- [lv2 module10](./lv2_module10/README.md "lv2 module 10")
-
+- lv2 module1
+  - [README](./lv2_module1/README.md "lv2 module 1 README")
+  - [report](./lv2_module1/report.md "lv2 module 1 report")
+- lv2 module2
+  - [README](./lv2_module2/README.md "lv2 module 2 README")
+  - [report](./lv2_module2/report.md "lv2 module 2 report")
+- lv2 module3
+  - [README](./lv2_module3/README.md "lv2 module 3 README")
+  - [report](./lv2_module3/report.md "lv2 module 3 report")
+- lv2 module4
+  - [README](./lv2_module4/README.md "lv2 module 4 README")
+  - [report](./lv2_module4/report.md "lv2 module 4 report")
+- lv2 module5
+  - [README](./lv2_module5/README.md "lv2 module 5 README")
+  - [report](./lv2_module5/report.md "lv2 module 5 report")
+- lv2 module6
+  - [README](./lv2_module6/README.md "lv2 module 6 README")
+  - [report](./lv2_module6/report.md "lv2 module 6 report")
+- lv2 module7
+  - [README](./lv2_module7/README.md "lv2 module 7 README")
+  - [report](./lv2_module7/report.md "lv2 module 7 report")
+- lv2 module8
+  - [README](./lv2_module8/README.md "lv2 module 8 README")
+  - [report](./lv2_module8/report.md "lv2 module 8 report")
+- lv2 module9
+  - [README](./lv2_module9/README.md "lv2 module 9 README")
+  - [report](./lv2_module9/report.md "lv2 module 9 report")
+- lv2 module10
+  - [README](./lv2_module10/README.md "lv2 module 10 README")
+  - [report](./lv2_module10/report.md "lv2 module 10 report")
