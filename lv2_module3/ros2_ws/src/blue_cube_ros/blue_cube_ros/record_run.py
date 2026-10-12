@@ -9,6 +9,7 @@ bag 재생은 프레임이 계속 바뀌므로, 출력 header.stamp(= 입력 Raw
   <prefix>_summary.json     노드에 실제 적용된 파라미터, 받은 프레임 수, 박스 수 분포, Mask 픽셀 수 통계
   <prefix>_detections_sample.yaml  검출 메시지 1개 원문 (필드 확인용)
   <prefix>_{raw,mask,overlay}_<stamp>.png   --snap으로 지정한 stamp의 세 토픽 이미지
+  <prefix>_frame_<stamp>.png  같은 stamp의 Raw | Mask | Overlay를 한 장으로 (토픽 이름·stamp 표시)
 """
 import argparse
 import collections
@@ -35,6 +36,20 @@ PARAMS = ['image_topic', 'lower_hsv', 'upper_hsv', 'min_area']
 def stamp_key(header):
     """header.stamp -> 'sec.msec' 문자열 (파일 이름·CSV 공통 키)."""
     return f'{header.stamp.sec}.{header.stamp.nanosec // 1_000_000:03d}'
+
+
+def montage(images, titles, footer):
+    """같은 stamp의 이미지들을 가로로 붙이고 위에 토픽 이름, 아래에 stamp를 쓴다 (putText는 ASCII만 가능)."""
+    panels = []
+    for img, title in zip(images, titles):
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR) if img.ndim == 2 else img
+        bar = np.full((32, img.shape[1], 3), 255, np.uint8)
+        cv2.putText(bar, title, (8, 23), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv2.LINE_AA)
+        panels.append(np.vstack([bar, img]))
+    row = np.hstack(panels)
+    bar = np.full((32, row.shape[1], 3), 255, np.uint8)
+    cv2.putText(bar, footer, (8, 23), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv2.LINE_AA)
+    return np.vstack([row, bar])
 
 
 def get_params(node, timeout=3.0):
@@ -108,6 +123,16 @@ def main():
     if sample:
         with open(out('detections_sample.yaml'), 'w', encoding='utf-8') as f:
             f.write(sample[0])
+    frames = []
+    for k in sorted({k for _, k in saved}, key=float):
+        paths = [out(f'{kind}_{k}.png') for kind in ('raw', 'mask', 'overlay')]
+        if all(os.path.isfile(pth) for pth in paths):
+            nb = len(det.get(k, []))
+            cv2.imwrite(out(f'frame_{k}.png'), montage(
+                [cv2.imread(pth, cv2.IMREAD_UNCHANGED) for pth in paths],
+                [a.raw_topic, f'{NODE}/mask', f'{NODE}/overlay'],
+                f'{a.prefix}  stamp {k}  boxes {nb}  mask_px {mask_px.get(k, "?")}'))
+            frames.append(f'frame_{k}')
     px = np.array([v for k, v in mask_px.items() if k in det] or [0])
     summary = {
         'applied_params': params,
@@ -115,6 +140,7 @@ def main():
         'boxes_per_frame_hist': dict(sorted(collections.Counter(len(det[k]) for k in keys).items())),
         'mask_px': {'min': int(px.min()), 'median': float(np.median(px)), 'max': int(px.max())},
         'snapshots': sorted(f'{kind}_{k}' for kind, k in saved),
+        'frames_combined': frames,
         'snap_missing': sorted(set(a.snap) - {k for _, k in saved}),
     }
     with open(out('summary.json'), 'w', encoding='utf-8') as f:
