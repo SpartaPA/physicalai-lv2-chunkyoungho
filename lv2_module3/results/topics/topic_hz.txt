@@ -1,0 +1,16 @@
+$ ros2 topic hz /camera/camera/color/image_raw --window 60   (약 5초)
+average rate: 29.983
+	min: 0.033s max: 0.034s std dev: 0.00014s window: 60
+
+$ ros2 topic hz /blue_cube_detector/mask --window 60   (약 5초)
+average rate: 29.974
+	min: 0.033s max: 0.034s std dev: 0.00027s window: 60
+
+$ ros2 topic hz /blue_cube_detector/overlay --window 60   (약 5초)
+average rate: 29.984
+	min: 0.033s max: 0.034s std dev: 0.00025s window: 60
+
+$ ros2 topic hz /blue_cube_detector/detections --window 60   (약 5초)
+average rate: 29.980
+	min: 0.033s max: 0.034s std dev: 0.00030s window: 60
+

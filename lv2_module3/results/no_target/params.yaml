@@ -1,0 +1,13 @@
+# 목표 없음 확인 — 최종 선택 설정 (실험 1 B의 V 하한 95 + 실험 2 A의 min_area 500)
+blue_cube_detector:
+  ros__parameters:
+    lower_hsv: [95, 80, 95]     # OpenCV HSV 하한 [H 0~179, S 0~255, V 0~255]
+    upper_hsv: [130, 255, 255]  # 상한
+    min_area: 500.0             # 후보 최소 contourArea [px^2]
+
+# 입력: 원통 없는 bag. 첫 프레임은 이전 장면(scene_target 마지막 프레임)이라 0.1 s 건너뜀
+bag_play:
+  ros__parameters:
+    uri: ~/lv2_module3_bags/scene_no_target
+    loop: true
+    start_offset: 0.1
