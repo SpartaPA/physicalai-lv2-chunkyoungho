@@ -14,6 +14,25 @@
 | **분석용** rosbag | D435로 직접 녹화한 bag을 `ros2 bag play --loop`로 재생 ([results/input/](results/input/)) | **설정값 변경에 따른 Mask·검출 변화 검증과 분석(보고서)**. 같은 bag이면 A·B에 프레임(stamp)별로 같은 입력이 들어감 |
 | **실시간** Camera | `realsense2_camera`로 D435 영상을 실시간 발행 | 같은 노드·설정이 실제 카메라 토픽에서도 동작함을 확인. 분석 수치에는 쓰지 않음 |
 
+### 입력 bag 녹화 (실제로 사용한 명령)
+
+```bash
+# 터미널 1: 카메라 — 컬러만 640x480 30 Hz, 프레임마다 밝기가 바뀌지 않게 자동 노출을 끔
+ros2 launch realsense2_camera rs_launch.py enable_depth:=false rgb_camera.color_profile:=640,480,30 rgb_camera.enable_auto_exposure:=false
+
+# 터미널 2: 원통을 든 장면 약 12초 녹화 (ros2 bag record에는 시간 제한 옵션이 없어 timeout으로 SIGINT를 보내 정상 종료)
+timeout -s INT 12 ros2 bag record --topics /camera/camera/color/image_raw /camera/camera/color/camera_info -o ~/lv2_module3_bags/scene_target
+
+# 원통만 치우고 같은 자리에서 다시 녹화
+timeout -s INT 12 ros2 bag record --topics /camera/camera/color/image_raw /camera/camera/color/camera_info -o ~/lv2_module3_bags/scene_no_target
+
+# 확인: Raw 프레임 수 ≈ 길이(초) × 30
+ros2 bag info ~/lv2_module3_bags/scene_target
+```
+
+- 압축 토픽(`.../compressed`)은 손실 압축이라 받지 않고, 원본 `image_raw`만 녹화했습니다. 저장 형식은 기본값 mcap입니다.
+- 녹화 결과는 [results/input/](results/input/)에 있습니다.
+
 ## 2. 처리 흐름과 토픽
 
 ```
