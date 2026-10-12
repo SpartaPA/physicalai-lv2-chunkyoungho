@@ -1,0 +1,15 @@
+# 실험 2 (검출 후보 필터) — A: 기준값 (원본 min_area)
+# 변경 변수: min_area 하나. HSV는 A·B 동일하게 [95,80,80]으로 고정
+#   (V 하한 80: 원통은 별도 덩어리, 스웨터는 작은 파편으로만 남는 값 → 작은 후보가 Mask에 실제로 존재)
+blue_cube_detector:
+  ros__parameters:
+    lower_hsv: [95, 80, 80]     # OpenCV HSV 하한 [H 0~179, S 0~255, V 0~255] (A·B 동일)
+    upper_hsv: [130, 255, 255]  # 상한 (A·B 동일)
+    min_area: 500.0             # 후보 최소 contourArea [px^2] ← 500 (원본)
+
+# 입력: source:=bag 으로 실행. A·B 같은 bag
+bag_play:
+  ros__parameters:
+    uri: ~/lv2_module3_bags/scene_target
+    loop: true
+    start_offset: 0.0
