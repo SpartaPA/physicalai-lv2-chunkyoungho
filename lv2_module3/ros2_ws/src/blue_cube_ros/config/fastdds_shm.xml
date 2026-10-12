@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- FastDDS 기본 SHM 세그먼트(약 0.5 MB)보다 큰 640x480 이미지(약 0.9 MB)가 UDP 조각으로 넘어가
+     best-effort에서 유실되는 것을 막는다. 같은 PC 안의 노드끼리 SHM으로 주고받게 세그먼트를 키운다.
+     사용: export FASTDDS_DEFAULT_PROFILES_FILE=<이 파일 경로> (발행·구독하는 모든 터미널에서) -->
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <transport_descriptors>
+    <transport_descriptor>
+      <transport_id>shm_large</transport_id>
+      <type>SHM</type>
+      <segment_size>16777216</segment_size>
+    </transport_descriptor>
+    <transport_descriptor>
+      <transport_id>udp</transport_id>
+      <type>UDPv4</type>
+    </transport_descriptor>
+  </transport_descriptors>
+  <participant profile_name="large_image_shm" is_default_profile="true">
+    <rtps>
+      <userTransports>
+        <transport_id>shm_large</transport_id>
+        <transport_id>udp</transport_id>
+      </userTransports>
+      <useBuiltinTransports>false</useBuiltinTransports>
+    </rtps>
+  </participant>
+</profiles>

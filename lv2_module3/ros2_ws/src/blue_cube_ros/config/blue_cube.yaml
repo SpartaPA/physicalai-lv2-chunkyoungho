@@ -1,0 +1,23 @@
+# 기준 설정 = blue_cube_reference.py 상수 값. 실험 A·B는 이 파일을 복사해 값 하나만 바꾼다.
+blue_cube_detector:
+  ros__parameters:
+    image_topic: /camera/camera/color/image_raw   # launch가 카메라 토픽으로 정함
+    lower_hsv: [95, 80, 50]     # OpenCV HSV 하한 [H 0~179, S 0~255, V 0~255]
+    upper_hsv: [130, 255, 255]  # 상한
+    min_area: 500.0             # 후보 최소 contourArea [px^2]
+
+# source:=bag 일 때만 사용. launch가 읽어 `ros2 bag play`에 넘긴다 (ROS 노드 파라미터가 아님).
+bag_play:
+  ros__parameters:
+    # bag 폴더(metadata.yaml이 있는 곳). 상대 경로는 이 yaml이 있는 폴더 기준. bag 원본은 용량 때문에 저장소 밖에 둔다
+    uri: ~/lv2_module3_bags/scene_target
+    loop: true                  # 반복 재생
+    start_offset: 0.0           # [s] 앞부분 건너뛰기 (scene_no_target은 첫 프레임이 이전 장면이라 0.1)
+
+
+
+
+
+# (채도) 중앙값 (범위 p5~p95)	V (밝기) 중앙값 (범위 p5~p95)
+#퍽	    221 (125~246)	138 (99~152)
+#옷(배경)	127 (91~158)	57 (50~83)
