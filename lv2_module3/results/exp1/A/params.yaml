@@ -1,0 +1,14 @@
+# 실험 1 (Mask 생성) — A: 기준값 (원본 상수)
+# 변경 변수: lower_hsv의 V 하한 하나. 나머지는 A·B 동일
+blue_cube_detector:
+  ros__parameters:
+    lower_hsv: [95, 80, 50]     # OpenCV HSV 하한 [H 0~179, S 0~255, V 0~255] ← V 하한 50 (원본)
+    upper_hsv: [130, 255, 255]  # 상한
+    min_area: 500.0             # 후보 최소 contourArea [px^2]
+
+# 입력: source:=bag 으로 실행. A·B 같은 bag
+bag_play:
+  ros__parameters:
+    uri: ~/lv2_module3_bags/scene_target
+    loop: true
+    start_offset: 0.0
