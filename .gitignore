@@ -1,0 +1,39 @@
+# ---- ROS 2 colcon 워크스페이스 산출물 ----
+build/
+install/
+log/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# ---- C++ / CMake ----
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+
+# ---- rosbag 원본 (용량이 커서 올리지 않음. 메타데이터만 results/에 기록) ----
+*.db3
+*.db3-shm
+*.db3-wal
+*.mcap
+
+# ---- 편집기·OS ----
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# ---- 인증 정보 ----
+.env
+*.pem
+*.key
