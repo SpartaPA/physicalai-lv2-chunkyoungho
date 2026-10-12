@@ -7,15 +7,17 @@
 
 ## 1. 입력
 
-입력은 다음과 같습니다.
+입력은 두 가지이며 용도가 다릅니다.
 
 | 입력 | 내용 | 용도 |
 |---|---|---|
+| **분석용** rosbag | D435로 직접 녹화한 bag을 `ros2 bag play --loop`로 재생 ([results/input/](results/input/)) | **설정값 변경에 따른 Mask·검출 변화 검증과 분석(보고서)**. 같은 bag이면 A·B에 프레임(stamp)별로 같은 입력이 들어감 |
 | **실시간** Camera | `realsense2_camera`로 D435 영상을 실시간 발행 | 같은 노드·설정이 실제 카메라 토픽에서도 동작함을 확인. 분석 수치에는 쓰지 않음 |
 
 ## 2. 처리 흐름과 토픽
 
 ```
+[분석용] ros2 bag play    → /camera/camera/color/image_raw  (sensor_msgs/Image, rgb8 640x480, 30 Hz)
 [실시간] /camera/camera   → /camera/camera/color/image_raw  (sensor_msgs/Image, rgb8 640x480, 30 Hz)
   └─ blue_cube_detector
        ├─ cv_bridge: rgb8 → bgr8
@@ -28,6 +30,7 @@
 ```
 
 - 세 출력의 `header`는 입력 Raw Image의 `header`를 그대로 씁니다. 같은 `stamp`로 같은 프레임인지 확인할 수 있습니다.
+- bag 재생은 녹화된 메시지를 그대로 다시 발행하므로 `header.stamp`도 촬영 시각 그대로입니다. 그래서 A·B 결과를 같은 stamp끼리 비교합니다.
 - `detections[i].bbox`: `center.position.x/y` = 박스 중심 [px], `size_x/size_y` = 폭·높이 [px], 원본 해상도 기준입니다. `results`(클래스·점수)는 비워 둡니다. `detect_blue()`가 박스만 반환하기 때문입니다.
 - 미검출이면 `detections: []`를 매 프레임 발행합니다.
 
@@ -40,7 +43,7 @@
 | Python | 3.12.3 |
 | OpenCV | 4.6.0 (Ubuntu `python3-opencv`) |
 | NumPy | 1.26.4 |
-| 의존 패키지 | `cv_bridge`, `vision_msgs`, `rqt_image_view` |
+| 의존 패키지 | `cv_bridge`, `vision_msgs`, `rqt_image_view`, `ros2bag`(mcap) |
 | Camera 드라이버 | `ros-lyrical-realsense2-camera` 4.57.7, `ros-lyrical-librealsense2` 2.57.7 |
 | Camera | Intel RealSense D435, 펌웨어 5.15.1.55, USB 3.2 연결 |
 
@@ -53,21 +56,23 @@
 | `lower_hsv` | `LOWER_BLUE` | `[95, 80, 50]` | `cv2.inRange` 하한 (Mask 생성) |
 | `upper_hsv` | `UPPER_BLUE` | `[130, 255, 255]` | `cv2.inRange` 상한 (Mask 생성) |
 | `min_area` | `MIN_AREA` | `500.0` [px²] | `cv2.contourArea(c) >= MIN_AREA` (검출 후보 필터) |
+| `bag_play.uri` | — | — | 분석용 입력으로 재생할 bag |
+| `bag_play.loop`, `bag_play.start_offset` | — | `true`, `0.0` [s] | 반복 재생, 앞부분 건너뛰기 |
 
-- 실험마다 설정 파일(`results/expN/{A,B}/params.yaml`)을 두고, 같은 이미지로 검출 설정 **값 하나만** 바꿉니다.
+- 실험마다 설정 파일(`results/expN/{A,B}/params.yaml`)을 두고, 같은 bag으로 검출 설정 **값 하나만** 바꿉니다.
 - 노드 시작 로그의 `applied: ... LOWER_BLUE=[...] UPPER_BLUE=[...] MIN_AREA=...` 줄로 실제 적용값을 확인하고 저장합니다.
 
 ## 5. 결과 파일 위치
 
 | 경로 | 내용 |
 |---|---|
-| `results/input/` | 분석용 입력 정보 |
+| `results/input/` | 분석용 bag의 `ros2 bag info` 출력과 장면 설명 |
 | `results/topics/` | `ros2 topic list -t`, `ros2 topic info --verbose`, `ros2 interface show` 출력 |
-| `results/exp1/{A,B}/` | 실험 1(Mask 생성) A·B: `params.yaml`, 노드 로그, Raw·Mask·Overlay 캡처, detections echo |
+| `results/exp1/{A,B}/` | 실험 1(Mask 생성) A·B: `params.yaml`, stamp별 검출·Mask 픽셀 수(CSV), 적용 파라미터·요약(JSON), 지정 stamp의 Raw·Mask·Overlay |
 | `results/exp2/{A,B}/` | 실험 2(검출 후보 필터) A·B: 위와 같은 구성 |
 | `results/no_target/` | 목표 없음 입력: Mask 캡처, `detections: []` 수신 로그 |
 
-파일 이름에는 실험 번호·A/B·토픽을 넣습니다. 예: `exp1_B_mask.png`
+파일 이름에는 실험 번호·A/B·토픽·stamp를 넣습니다. 예: `exp1_B_mask_1791784737.984.png`
 
 ## 6. 확인 시험 (2026-10-12)
 

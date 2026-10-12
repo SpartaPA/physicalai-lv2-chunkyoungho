@@ -1,0 +1,15 @@
+
+Files:             0_scene_target_2026_10_12-14_58_52.mcap
+Bag size:          307.0 MiB
+Storage id:        mcap
+ROS Distro:        lyrical
+Duration:          11.608112482s
+Start:             Oct 12 2026 14:58:52.213498031 (1791784732.213498031)
+End:               Oct 12 2026 14:59:03.821610513 (1791784743.821610513)
+Messages:          698
+Topic information: Topic: /camera/camera/color/camera_info | Type: sensor_msgs/msg/CameraInfo | Count: 349 | Serialization Format: cdr
+                   Topic: /camera/camera/color/image_raw | Type: sensor_msgs/msg/Image | Count: 349 | Serialization Format: cdr
+Services:          0
+Service information: 
+Actions:           0
+Action information: 
