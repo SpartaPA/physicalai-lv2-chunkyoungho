@@ -40,17 +40,26 @@
        └─ /blue_cube_detector/detections  vision_msgs/Detection2DArray
 ```
 
-- 세 출력의 `header`는 입력 Raw Image의 `header`를 그대로 씁니다. 같은 `stamp`로 같은 프레임인지 확인할 수 있습니다.
-- bag 재생은 녹화된 메시지를 그대로 다시 발행하므로 `header.stamp`도 촬영 시각 그대로입니다. 그래서 A·B 결과를 같은 stamp끼리 비교합니다.
-- `detections[i].bbox`: `center.position.x/y` = 박스 중심 [px], `size_x/size_y` = 폭·높이 [px], 원본 해상도 기준입니다. `results`(클래스·점수)는 비워 둡니다. `detect_blue()`가 박스만 반환하기 때문입니다.
-- 미검출이면 `detections: []`를 매 프레임 발행합니다.
+- 세 출력의 `header`는 입력 Raw Image의 `header`를 그대로 씁니다. 같은 `stamp`로 같은 프레임인지 확인
+- bag 재생은 녹화된 메시지를 그대로 다시 발행하므로 `header.stamp`도 촬영 시각 그대로입니다. 그래서 A·B 결과를 같은 stamp끼리 비교
+- `detections[i].bbox`: `center.position.x/y` = 박스 중심 [px], `size_x/size_y` = 폭·높이 [px], 원본 해상도 기준
+- `detections[i].results`(클래스 = 물체 종류, 점수 = 신뢰도)는 비워 둡니다. `detect_blue()`는 HSV 범위와 면적 조건을 통과한 chunk의 박스만 돌려 - 물체 종류를 판단하거나 신뢰도를 계산하지 않기 때문.
+- 미검출이면 `detections: []`를 매 프레임 발행
+
+**검출 결과에 `vision_msgs/msg/Detection2DArray`를 쓴 이유**
+
+- **표준 형식:** `vision_msgs`는 물체 검출기의 출력을 주고받기 위한 ROS 커뮤니티 공통 메시지 패키지입니다(Apache 2.0, 이 환경에 4.2.0 설치). 별도의 메시지 패키지를 직접 만들 필요가 없슴.
+- **한 프레임 = 한 메시지:** 한 프레임의 박스 여러 개를 `detections[]` 배열 하나에 담음. `header`로 입력 Raw Image와 같은 프레임임을 표시할 수 있어, A·B 결과를 stamp끼리 맞춰 비교하기 좋음
+- **미검출 표현:** 박스가 없으면 빈 배열(`detections: []`)로 나타내어 "검출 없음"과 "메시지가 안 옴"을 구분할 수 있음
+- **필드 의미가 정해져 있음:** 박스 중심·크기(`bbox`)의 이름과 단위가 메시지 정의에 정해져 있어 `ros2 topic echo`·`ros2 interface show`로 바로 읽을 수 있음.
+
 
 ## 4. 실행 환경
 
 | 항목 | 값 |
 |---|---|
 | OS | Ubuntu 24.04.5 LTS (PC) |
-| ROS 2 | Lyrical, RMW `rmw_fastrtps_cpp`(기본값) |
+| ROS 2 | Lyrical |
 | Python | 3.12.3 |
 | OpenCV | 4.6.0 (Ubuntu `python3-opencv`) |
 | NumPy | 1.26.4 |
@@ -62,7 +71,7 @@
 
 설정값은 ROS 2 파라미터입니다. 노드는 시작할 때 이 값으로 `detect_blue()`가 쓰는 상수를 덮어쓰고, `detect_blue()`는 호출될 때마다 이 상수를 읽습니다. 파라미터는 시작 시 한 번만 읽으므로 값을 바꾸면 노드를 재시작합니다.
 
-| 파라미터 | 덮어쓰는 상수 | 기본값(= 원본 상수) | 쓰이는 곳 |
+| 파라미터 | 상수 | 기본값 | 쓰이는 곳 |
 |---|---|---|---|
 | `lower_hsv` | `LOWER_BLUE` | `[95, 80, 50]` | `cv2.inRange` 하한 (Mask 생성) |
 | `upper_hsv` | `UPPER_BLUE` | `[130, 255, 255]` | `cv2.inRange` 상한 (Mask 생성) |
@@ -70,12 +79,12 @@
 | `bag_play.uri` | — | `~/lv2_module3_bags/scene_target` | 분석용 입력으로 재생할 bag (상대 경로는 yaml 폴더 기준) |
 | `bag_play.loop`, `bag_play.start_offset` | — | `true`, `0.0` [s] | 반복 재생, 앞부분 건너뛰기 |
 
-- 실험마다 설정 파일(`results/expN/{A,B}/params.yaml`)을 두고, 같은 bag으로 검출 설정 **값 하나만** 바꿉니다.
+- 실험마다 설정 파일(`results/expN/{A,B}/params.yaml`)을 두고, 같은 bag으로 검출 설정 서로 **값 하나만** 바꿉
 - 노드 시작 로그의 `applied: ... LOWER_BLUE=[...] UPPER_BLUE=[...] MIN_AREA=...` 줄과 `record_run`의 `applied_params`로 실제 적용값을 확인합니다.
 
 ## 6. 실행 방법
 
-아래에서 **`<clone 경로>`**는 각자 이 저장소를 `git clone`으로 받은 폴더입니다(예: `~/git`). 실험 명령(6-1 ~ 6-4)은 모두 **`<clone 경로>/physicalai-lv2-chunkyoungho/lv2_module3/` 폴더**에서 실행합니다.
+아래에서 **`<clone 경로>`**는 이 저장소를 `git clone`으로 받은 폴더입니다(예: `~/git`). 실험 명령(6-1 ~ 6-4)은 모두 **`<clone 경로>/physicalai-lv2-chunkyoungho/lv2_module3/` 폴더**에서 실행합니다.
 
 ### 6-0. 공통 준비
 
@@ -128,14 +137,14 @@ timeout -s INT 12 ros2 bag record --topics /camera/camera/color/image_raw /camer
 ros2 bag info ~/lv2_module3_bags/scene_target
 ```
 
-- 압축 토픽(`.../compressed`)은 손실 압축이라 받지 않고, 원본 `image_raw`만 녹화했습니다. 저장 형식은 기본값 mcap입니다.
-- 녹화하는 터미널에도 위의 환경 설정(특히 `FASTDDS_DEFAULT_PROFILES_FILE`)이 필요합니다. 없으면 이미지가 유실된 채로 녹화됩니다.
+- 압축 토픽(`.../compressed`)은 손실 압축이라 받지 않고, 원본 `image_raw`만 녹화. 저장 형식은 기본값 mcap.
+- 녹화하는 터미널에도 위의 환경 설정(특히 `FASTDDS_DEFAULT_PROFILES_FILE`)이 필요. 없으면 이미지가 유실된 채로 녹화됨.
 
-다른 위치의 bag을 쓰려면 설정 파일의 `bag_play.uri`를 고치거나, launch에 `bag:=<bag 폴더>`를 붙입니다(명령줄 값이 우선합니다).
+다른 위치의 bag을 쓰려면 설정 파일의 `bag_play.uri`를 고치거나, launch에 `bag:=<bag 폴더>`를 붙입니다(명령줄 값이 우선함).
 
-**기록 도구 `record_run`**
+**기록 도구 `record_run`** 
 
-`record_run`은 검출 노드가 떠 있는 동안 함께 실행해 결과를 파일로 남깁니다. 검출 처리에는 관여하지 않고 구독만 합니다.
+`record_run`은 검출 노드가 떠 있는 동안 함께 실행해 결과를 파일로 남김. 검출 처리에는 관여하지 않고 구독만 동작.
 
 ```bash
 ros2 run blue_cube_ros record_run --out <저장 폴더> --prefix <파일 앞부분> [--snap <stamp> ...] [--duration 15]
@@ -160,7 +169,7 @@ ros2 run blue_cube_ros record_run --out <저장 폴더> --prefix <파일 앞부�
 
 ### 6-1. 실험 1 — Mask 생성 (V 하한 50 → 95)
 
-설정: [results/exp1/A/params.yaml](results/exp1/A/params.yaml)(V 하한 50, 원본), [results/exp1/B/params.yaml](results/exp1/B/params.yaml)(V 하한 95). 다른 값은 같습니다.
+설정: [results/exp1/A/params.yaml](results/exp1/A/params.yaml)(V 하한 50, 원본), [results/exp1/B/params.yaml](results/exp1/B/params.yaml)(V 하한 95). 다른 값은 동일.
 
 ```bash
 # A — 터미널 1
@@ -189,7 +198,7 @@ ros2 run blue_cube_ros record_run --out results/exp2/B --prefix exp2_B --snap 17
 
 ### 6-3. 목표 없음 확인 — 최종 선택 설정
 
-설정: [results/no_target/params.yaml](results/no_target/params.yaml)(V 하한 95, min_area 500, `scene_no_target`, `start_offset 0.1`). 이 bag의 첫 프레임은 이전 장면이라 0.1초를 건너뜁니다.
+설정: [results/no_target/params.yaml](results/no_target/params.yaml)(V 하한 95, min_area 500, `scene_no_target`, `start_offset 0.1`). 이 bag의 첫 프레임은 이전 장면이라 0.1초를 건너뛰기.
 
 ```bash
 ros2 launch blue_cube_ros blue_cube.launch.py source:=bag params_file:=results/no_target/params.yaml
@@ -198,7 +207,7 @@ ros2 run blue_cube_ros record_run --out results/no_target --prefix no_target --s
 
 ### 6-4. 토픽 정보
 
-검출 노드를 실행한 상태에서 다른 터미널에서 실행합니다. `--no-daemon`은 이전 실행의 토픽 정보가 섞이지 않게 새로 조회하는 옵션입니다.
+검출 노드를 실행한 상태에서 다른 터미널에서 실행합니다. `--no-daemon`은 이전 실행의 토픽 정보가 섞이지 않게 새로 조회하는 옵션.
 
 ```bash
 ros2 launch blue_cube_ros blue_cube.launch.py source:=bag
@@ -225,9 +234,9 @@ ros2 run rqt_image_view rqt_image_view /blue_cube_detector/mask     # Raw·Overl
 | `results/exp2/{A,B}/` | 실험 2(검출 후보 필터) A·B: 위와 같은 구성 |
 | `results/no_target/` | 목표 없음 확인: `params.yaml`과 `record_run` 결과 (모든 프레임 `detections: []`) |
 
-파일 이름에는 실험 번호·A/B·토픽·stamp를 넣습니다. 예: `exp1_B_mask_1791784737.984.png`
+파일 이름에는 실험 번호·A/B·토픽·stamp를 넣음. 예: `exp1_B_mask_1791784737.984.png`
 
-## 8. 확인 시험 (2026-10-12)
+## 8. 확인 시험
 
 처음에는 합성 영상(회색 배경 + 파란 사각형 100×80 1개, 20×20 1개, rgb8 10 Hz)으로 노드 동작을 확인했습니다.
 
@@ -236,6 +245,6 @@ ros2 run rqt_image_view rqt_image_view /blue_cube_detector/mask     # Raw·Overl
 - `min_area: 300`: 20×20도 검출되어 2개. 파라미터가 적용된 것을 확인
 - 파란색이 없는 입력: `detections: []`
 
-실시간 Camera 입력도 확인했습니다.
+실시간 Camera 입력도 확인
 
 - 실시간: `/camera/camera/color/image_raw`(rgb8) → Mask 약 30 Hz 수신
