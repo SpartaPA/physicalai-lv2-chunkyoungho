@@ -1,0 +1,38 @@
+# 2026-10-12 16:02:13  source:=bag (scene_target, 기본 설정) + 구독자 record_run 실행 중
+$ ros2 topic info /blue_cube_detector/detections --verbose --no-daemon
+Type: vision_msgs/msg/Detection2DArray
+
+Publisher count: 1
+
+Node name: blue_cube_detector
+Node namespace: /
+Topic type: vision_msgs/msg/Detection2DArray
+Topic type hash: RIHS01_214274120007f4a683866481336b70310268cfa107aebe9d594a6acf75bda968
+Endpoint type: PUBLISHER
+GID: 01.0f.df.ed.7c.78.47.ff.00.00.00.00.00.00.17.03
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): KEEP_LAST (10)
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Subscription count: 1
+
+Node name: record_run
+Node namespace: /
+Topic type: vision_msgs/msg/Detection2DArray
+Topic type hash: RIHS01_214274120007f4a683866481336b70310268cfa107aebe9d594a6acf75bda968
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.df.ed.db.78.37.62.00.00.00.00.00.00.19.04
+QoS profile:
+  Reliability: RELIABLE
+  History (Depth): KEEP_LAST (100)
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+

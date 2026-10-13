@@ -1,0 +1,36 @@
+{
+  "applied_params": {
+    "image_topic": "/camera/camera/color/image_raw",
+    "lower_hsv": [
+      95,
+      80,
+      80
+    ],
+    "upper_hsv": [
+      130,
+      255,
+      255
+    ],
+    "min_area": 100.0
+  },
+  "frames": 349,
+  "boxes_per_frame_hist": {
+    "1": 199,
+    "2": 146,
+    "3": 4
+  },
+  "mask_px": {
+    "min": 3262,
+    "median": 3718.0,
+    "max": 4057
+  },
+  "snapshots": [
+    "mask_1791784737.984",
+    "overlay_1791784737.984",
+    "raw_1791784737.984"
+  ],
+  "frames_combined": [
+    "frame_1791784737.984"
+  ],
+  "snap_missing": []
+}

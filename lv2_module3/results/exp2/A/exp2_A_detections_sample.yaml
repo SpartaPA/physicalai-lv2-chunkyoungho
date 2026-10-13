@@ -1,0 +1,21 @@
+header:
+  stamp:
+    sec: 1791784735
+    nanosec: 15336914
+  frame_id: camera_color_optical_frame
+detections:
+- header:
+    stamp:
+      sec: 1791784735
+      nanosec: 15336914
+    frame_id: camera_color_optical_frame
+  results: []
+  bbox:
+    center:
+      position:
+        x: 419.5
+        y: 123.5
+      theta: 0.0
+    size_x: 84.0
+    size_y: 92.0
+  id: '0'

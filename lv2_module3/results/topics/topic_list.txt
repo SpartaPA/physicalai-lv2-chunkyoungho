@@ -1,0 +1,9 @@
+# 2026-10-12 16:00:32  ros2 launch blue_cube_ros blue_cube.launch.py source:=bag (scene_target, 기본 설정)
+$ ros2 topic list -t --no-daemon
+/blue_cube_detector/detections [vision_msgs/msg/Detection2DArray]
+/blue_cube_detector/mask [sensor_msgs/msg/Image]
+/blue_cube_detector/overlay [sensor_msgs/msg/Image]
+/camera/camera/color/image_raw [sensor_msgs/msg/Image]
+/events/read_split [rosbag2_interfaces/msg/ReadSplitEvent]
+/parameter_events [rcl_interfaces/msg/ParameterEvent]
+/rosout [rcl_interfaces/msg/Log]
